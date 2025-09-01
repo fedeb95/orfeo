@@ -39,6 +39,11 @@ DIPHTONGS = (
 RE_DIPHTONG = re.compile(DIPHTONGS, re.IGNORECASE)
 RE_VOWEL   = re.compile(VOWEL)
 
+VOWELS = set("aeiou")
+CONSONANTS = set(
+    "bcdfghjklmnpqrstvwxyz"
+) 
+
 # ----------------------------------------------------------------------
 # Utility di normalizzazione
 # ----------------------------------------------------------------------
@@ -80,44 +85,54 @@ def _count_syllables(word: str) -> int:
 
     return max(syllable_cnt, 0)
 
-# ----------------------------------------------------------------------
-# Helper per costruire pattern LIKE specifici per assonanza / consonanza
-# ----------------------------------------------------------------------
 VOWEL_SET = set("aeiouàèéìíòóùúAEIOUÀÈÉÌÍÒÓÙÚ")
+VOWELS = set("aeiou")
+CONSONANTS = set(
+    "bcdfghjklmnpqrstvwxyz"
+)  # tutte le consonanti dell’alfabeto italiano (senza accenti)
 
-def _build_assonance_pattern(suffix: str) -> str:
+# ----------------------------------------------------------------------
+# Costruzione dei pattern
+# ----------------------------------------------------------------------
+def _build_like_pattern(suffix: str) -> str:
+    """Pattern per rima perfetta: %suffix (usato con LIKE)."""
+    return f"%{_normalize(suffix)}"
+
+
+def _build_assonance_glob_pattern(suffix: str) -> str:
     """
-    Trasforma il suffisso in un pattern LIKE dove:
-        - le vocali rimangono tali,
-        - le consonanti diventano '_' (wildcard singolo).
-    Esempio:  "esso" → "%e__o"
+    **Assonanza** – consonanti fisse, vocali → character‑set di tutte le consonanti.
+    Esempio:
+        input  "esso" → pattern "%ss[bcdfghjklmnpqrstvwxyz]"
     """
     norm = _normalize(suffix)
     pattern_chars = [
-        ch if ch in VOWEL_SET else "_" for ch in norm
+        ch if ch in VOWELS else f"[{''.join(sorted(CONSONANTS))}]"
+        for ch in norm
     ]
-    return "%" + "".join(pattern_chars)
+    return "*" + "".join(pattern_chars)
 
 
-def _build_consonance_pattern(suffix: str) -> str:
+def _build_consonance_glob_pattern(suffix: str) -> str:
     """
-    Trasforma il suffisso in un pattern LIKE dove:
-        - le consonanti rimangono tali,
-        - le vocali diventano '_' (wildcard singolo).
-    Esempio:  "atto" → "%_tt_"
+    **Consonanza** – vocali fisse, consonanti → character‑set di tutte le vocali.
+    Esempio:
+        input  "esso" → pattern "%e[aeiou][aeiou]o"
     """
     norm = _normalize(suffix)
     pattern_chars = [
-        ch if ch not in VOWEL_SET else "_" for ch in norm
+        ch if ch in CONSONANTS else f"[{''.join(sorted(VOWELS))}]"
+        for ch in norm
     ]
-    return "%" + "".join(pattern_chars)
+    return "*" + "".join(pattern_chars)
 
 # ----------------------------------------------------------------------
 # Funzioni di supporto per il DB
 # ----------------------------------------------------------------------
 def _build_like_pattern(suffix: str) -> str:
-    """Pattern SQL per il suffisso richiesto."""
-    return f"%{suffix}"
+    """Pattern per rima perfetta: %suffix (usato con LIKE)."""
+    return f"%{_normalize(suffix)}"
+
 
 def _execute_query(db_path: Path, pattern: str) -> List[str]:
     """
@@ -131,6 +146,26 @@ def _execute_query(db_path: Path, pattern: str) -> List[str]:
             SELECT DISTINCT testo
             FROM parola
             WHERE LOWER(testo) LIKE ?
+        """
+        cur.execute(sql, (pattern,))
+        rows = cur.fetchall()
+        return [_normalize(row[0]) for row in rows]
+    finally:
+        conn.close()
+
+
+def _execute_glob_query(db_path: Path, pattern: str) -> List[str]:
+    """
+    SELECT … WHERE LOWER(testo) GLOB pattern
+    Usato per assonanza e consonanza (character‑set [] supportato da GLOB).
+    """
+    conn = sqlite3.connect(str(db_path))
+    try:
+        cur = conn.cursor()
+        sql = """
+            SELECT DISTINCT testo
+            FROM parola
+            WHERE LOWER(testo) GLOB ?
         """
         cur.execute(sql, (pattern,))
         rows = cur.fetchall()
@@ -187,25 +222,19 @@ def find_rhymes(
     # ------------------------------------------------------------------
     if rhyme_type == "perfect":
         pattern = _build_like_pattern(suffix)            # %suffix
+        candidates = _execute_query(db_path, pattern)
     elif rhyme_type == "assonance":
-        pattern = _build_assonance_pattern(suffix)       # %e__o, %a_i_, …
+        pattern = _build_assonance_glob_pattern(suffix)       # GLOB
+        candidates = _execute_glob_query(db_path, pattern)
+        candidates = _exclude_exact_suffix(candidates, suffix)
     elif rhyme_type == "consonance":
-        pattern = _build_consonance_pattern(suffix)      # %_tt_, %b_n_, …
+        pattern = _build_consonance_glob_pattern(suffix)     # GLOB
+        candidates = _execute_glob_query(db_path, pattern)
+        candidates = _exclude_exact_suffix(candidates, suffix)
     else:
         raise ValueError(
             "Tipo di rima non riconosciuto. Usa 'perfect', 'assonance' o 'consonance'."
         )
-
-    # ------------------------------------------------------------------
-    # Recupero dal DB
-    # ------------------------------------------------------------------
-    candidates = _execute_query(db_path, pattern)
-
-    # ------------------------------------------------------------------
-    # Escludi parole con lo stesso suffisso dell’input
-    # ------------------------------------------------------------------
-    if rhyme_type != "perfect":
-        candidates = _exclude_exact_suffix(candidates, suffix)
 
     # ------------------------------------------------------------------
     # Eventuale filtro per numero di sillabe
