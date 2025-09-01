@@ -128,7 +128,7 @@ def rhyme():
     syllables = _parse_int(syllables_raw) if syllables_raw is not None else None
 
     # Paginazione
-    limit = _parse_positive_int(request.args.get("limit"), default=50)
+    limit = _parse_positive_int(request.args.get("limit"), default=10)
     page  = _parse_positive_int(request.args.get("page"),  default=1)
 
     # ------------------- 3️⃣ Ricerca -------------------------------

@@ -1,17 +1,19 @@
 // src/App.jsx
 import React, { useState, useCallback } from "react";
+import { Container, Paper, Typography, CssBaseline } from "@mui/material";
 import SearchForm from "./components/SearchForm";
 import Results from "./components/Results";
 import Pagination from "./components/Pagination";
 import { fetchRhymes } from "./api";
+import { Snackbar, Alert } from "@mui/material";
+import { useEffect } from "react";
 
 export default function App() {
-  const [queryParams, setQueryParams] = useState(null); // parametri correnti
-  const [data, setData] = useState(null);              // risposta JSON
+  const [queryParams, setQueryParams] = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Funzione centrale per effettuare la chiamata API
   const loadData = useCallback(
     async (params) => {
       setLoading(true);
@@ -19,9 +21,9 @@ export default function App() {
       try {
         const resp = await fetchRhymes(params);
         setData(resp);
-        setQueryParams(params); // ricordiamo i parametri usati
-      } catch (err) {
-        setError(err);
+        setQueryParams(params);
+      } catch (e) {
+        setError(e);
         setData(null);
       } finally {
         setLoading(false);
@@ -30,33 +32,56 @@ export default function App() {
     []
   );
 
-  // Invocata dal form di ricerca
-  const handleSearch = (params) => {
-    loadData(params);
-  };
-
-  // Invocata dai pulsanti di paginazione
+  const handleSearch = (params) => loadData(params);
   const handlePageChange = (newPage) => {
     if (!queryParams) return;
-    const newParams = { ...queryParams, page: newPage };
-    loadData(newParams);
+    loadData({ ...queryParams, page: newPage });
   };
 
+    const [snack, setSnack] = useState({ open: false, message: "", severity: "info" });
+
+    useEffect(() => {
+      if (error) {
+        setSnack({
+          open: true,
+          message: error.message || "Errore nella richiesta",
+          severity: "error",
+        });
+      }
+    }, [error]);
+
   return (
-    <div style={{ maxWidth: "800px", margin: "auto", padding: "1rem" }}>
-      <h1>Trova rime</h1>
+    <>
+      <CssBaseline />
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Paper elevation={3} sx={{ p: 3 }}>
+          <Typography variant="h4" component="h1" gutterBottom align="center">
+            Trova rime
+          </Typography>
 
-      <SearchForm onSearch={handleSearch} />
+          <SearchForm onSearch={handleSearch} />
 
-      <Results data={data} loading={loading} error={error} />
+          <Results data={data} loading={loading} error={error} />
 
-      {data && (
-        <Pagination
-          page={data.page}
-          totalPages={data.total_pages}
-          onPageChange={handlePageChange}
-        />
-      )}
-    </div>
+          {data && (
+            <Pagination
+              page={data.page}
+              totalPages={data.total_pages}
+              onPageChange={handlePageChange}
+            />
+          )}
+        </Paper>
+      </Container>
+         <Snackbar
+          open={snack.open}
+          autoHideDuration={4000}
+          onClose={() => setSnack({ ...snack, open: false })}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+          <Alert severity={snack.severity} sx={{ width: "100%" }}>
+            {snack.message}
+          </Alert>
+        </Snackbar>
+    </>
   );
 }

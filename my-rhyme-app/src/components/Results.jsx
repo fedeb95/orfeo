@@ -1,30 +1,53 @@
 // src/components/Results.jsx
 import React from "react";
+import Grow from "@mui/material/Grow";
+import {
+  Box,
+  Typography,
+  List,
+  ListItem,
+  CircularProgress,
+  Alert,
+} from "@mui/material";
 
 export default function Results({ data, loading, error }) {
-  if (loading) return <p>Caricamento…</p>;
-  if (error) return <p style={{ color: "red" }}>Errore: {error.message}</p>;
+  if (loading)
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
 
-  if (!data) return null; // nessuna ricerca ancora
+  if (error)
+    return (
+      <Alert severity="error" sx={{ my: 2 }}>
+        {error.message || "Si è verificato un errore"}
+      </Alert>
+    );
+
+  if (!data) return null;
 
   const { results, total_matches, limit, page, total_pages } = data;
 
   return (
-    <div>
-      <p>
-        <strong>{total_matches}</strong> parole trovate. Mostrando pagina{" "}
-        <strong>{page}</strong> di <strong>{total_pages}</strong>.
-      </p>
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="subtitle1" gutterBottom>
+        <strong>{total_matches}</strong> parole trovate – pagina <strong>
+          {page}
+        </strong> di <strong>{total_pages}</strong>
+      </Typography>
 
-      {results.length === 0 ? (
-        <p>(Nessuna corrispondenza per i criteri scelti)</p>
-      ) : (
-        <ul>
-          {results.map((word, idx) => (
-            <li key={idx}>{word}</li>
-          ))}
-        </ul>
-      )}
-    </div>
+     {results.length === 0 ? (
+          <Typography>(Nessuna corrispondenza…)</Typography>
+        ) : (
+          <Grow in={true} timeout={500}>
+            <List dense>
+              {results.map((w, i) => (
+                <ListItem key={i}>{w}</ListItem>
+              ))}
+            </List>
+          </Grow>
+        )} 
+    </Box>
   );
 }

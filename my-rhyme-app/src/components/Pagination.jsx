@@ -1,33 +1,39 @@
 // src/components/Pagination.jsx
 import React from "react";
+import { Stack, Button, Typography } from "@mui/material";
 
 export default function Pagination({ page, totalPages, onPageChange }) {
-  if (totalPages <= 1) return null; // niente pagine da navigare
-
-  const prevDisabled = page <= 1;
-  const nextDisabled = page >= totalPages;
+  if (totalPages <= 1) return null;
 
   return (
-    <div style={{ marginTop: "1rem" }}>
-      <button
+    <Stack
+      direction="row"
+      spacing={2}
+      alignItems="center"
+      justifyContent="center"
+      sx={{ mt: 3 }}
+    >
+      <Button
+        variant="outlined"
+        size="small"
         onClick={() => onPageChange(page - 1)}
-        disabled={prevDisabled}
-        style={{ marginRight: "0.5rem" }}
+        disabled={page <= 1}
       >
         ◀ Prev
-      </button>
+      </Button>
 
-      <span>
+      <Typography>
         Pagina {page} / {totalPages}
-      </span>
+      </Typography>
 
-      <button
+      <Button
+        variant="outlined"
+        size="small"
         onClick={() => onPageChange(page + 1)}
-        disabled={nextDisabled}
-        style={{ marginLeft: "0.5rem" }}
+        disabled={page >= totalPages}
       >
         Next ▶
-      </button>
-    </div>
+      </Button>
+    </Stack>
   );
 }
