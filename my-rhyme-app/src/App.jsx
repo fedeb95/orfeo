@@ -5,7 +5,7 @@ import SearchForm from "./components/SearchForm";
 import Results from "./components/Results";
 import Pagination from "./components/Pagination";
 import { fetchRhymes } from "./api";
-import { Snackbar, Alert } from "@mui/material";
+import { Snackbar, Alert, Box } from "@mui/material";
 import { useEffect } from "react";
 
 export default function App() {
@@ -55,8 +55,13 @@ export default function App() {
       <CssBaseline />
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Paper elevation={3} sx={{ p: 3 }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center">
+          <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 2 }}>
             Trova rime
+          </Typography>
+          <Typography component="p" gutterBottom align="left" sx={{ mb: 2 }}>
+            Ricerca di rime per suffisso. 
+            Sono rime perfette tutte le parole con identico suffisso, ignorando gli accenti.
+            Per contare le sillabe viene applicata un'euristica, per cui il filtro "Sillabe" potrebbe dare risultati inesatti.
           </Typography>
 
           <SearchForm onSearch={handleSearch} />
