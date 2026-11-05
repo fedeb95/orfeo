@@ -109,7 +109,7 @@ export default function App() {
         </details>
         <p>
           Dizionario <a href="https://docs.sslmit.unibo.it/doku.php?id=resources:morph-it">Morph-it!</a> di Marco Baroni
-          ed Eros Zanchetta (CC BY-SA 2.0 / LGPL). <a href="https://github.com/fedeb95/rime">Codice sorgente</a> (MIT).
+          ed Eros Zanchetta (CC BY-SA 2.0 / LGPL). <a href="https://github.com/fedeb95/orfeo">Codice sorgente</a> (MIT).
         </p>
       </footer>
     </>
