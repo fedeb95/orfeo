@@ -1,15 +1,8 @@
-// src/components/SearchForm.jsx
-import React, { useState } from "react";
-import {
-  Box,
-  TextField,
-  MenuItem,
-  Button,
-  InputAdornment,
-} from "@mui/material";
+import { useState } from "react";
+import { Box, Button, InputAdornment, MenuItem, TextField } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
-export default function SearchForm({ onSearch }) {
+export default function SearchForm({ onSearch, disabled }) {
   const [suffix, setSuffix] = useState("");
   const [type, setType] = useState("perfect");
   const [syllables, setSyllables] = useState("");
@@ -17,14 +10,12 @@ export default function SearchForm({ onSearch }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const params = {
+    onSearch({
       suffix: suffix.trim(),
       type,
-      limit: Number(limit) || 10,
-      page: 1,
-    };
-    if (syllables) params.syllables = Number(syllables);
-    onSearch(params);
+      syllables: syllables ? Number(syllables) : null,
+      limit: Math.min(Math.max(Number(limit) || 10, 1), 200),
+    });
   };
 
   return (
@@ -37,33 +28,27 @@ export default function SearchForm({ onSearch }) {
         gap: 2,
         mb: 3,
         alignItems: "center",
-        // Su schermi piccoli, tutti gli elementi vanno a capo
-        "& > *": { flex: "1 1 150px" }, // min‑width 150px, espandibile
+        "& > *": { flex: "1 1 150px" },
       }}
-    >    
+    >
       <TextField
         label="Suffisso"
         value={suffix}
         onChange={(e) => setSuffix(e.target.value)}
         required
         size="small"
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon />
-            </InputAdornment>
-          ),
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          },
         }}
       />
 
-      <TextField
-        select
-        label="Tipo"
-        value={type}
-        onChange={(e) => setType(e.target.value)}
-        size="small"
-        sx={{ minWidth: 130 }}
-      >
+      <TextField select label="Tipo" value={type} onChange={(e) => setType(e.target.value)} size="small">
         <MenuItem value="perfect">Perfetta</MenuItem>
         <MenuItem value="assonance">Assonanza</MenuItem>
         <MenuItem value="consonance">Consonanza</MenuItem>
@@ -75,21 +60,19 @@ export default function SearchForm({ onSearch }) {
         value={syllables}
         onChange={(e) => setSyllables(e.target.value)}
         size="small"
-        sx={{ width: 120 }}
-        inputProps={{ min: 1 }}
+        slotProps={{ htmlInput: { min: 1 } }}
       />
 
       <TextField
-        label="Limite/pagina"
+        label="Risultati per pagina"
         type="number"
         value={limit}
         onChange={(e) => setLimit(e.target.value)}
         size="small"
-        sx={{ width: 120 }}
-        inputProps={{ min: 1, max: 200 }}
+        slotProps={{ htmlInput: { min: 1, max: 200 } }}
       />
 
-      <Button variant="contained" type="submit" sx={{ height: 40 }}>
+      <Button variant="contained" type="submit" disabled={disabled} sx={{ height: 40 }}>
         Cerca
       </Button>
     </Box>

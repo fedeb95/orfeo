@@ -1,7 +1,0 @@
-# Configurazione dell’app Flask
-database:
-  path: "./parole.db"   # Percorso relativo o assoluto
-server:
-  host: "0.0.0.0"
-  port: 5000
-  debug: true                         # Solo per sviluppo
