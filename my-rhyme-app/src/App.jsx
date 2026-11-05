@@ -99,14 +99,12 @@ export default function App() {
       </main>
 
       <footer>
-        <details>
-          <summary>Come funziona</summary>
-          <p>
-            <b>Perfetta</b>: stessa terminazione. <b>Assonanza</b>: stesse vocali, consonanti diverse.{" "}
-            <b>Consonanza</b>: stesse consonanti, vocali diverse. Gli accenti sono ignorati. Le sillabe sono contate con
-            regole approssimate e possono sbagliare con gli iati (pa-u-ra).
-          </p>
-        </details>
+        <h3>Come funziona</h3>
+        <p>
+          <b>Perfetta</b>: stessa terminazione. <b>Assonanza</b>: stesse vocali, consonanti diverse.{" "}
+          <b>Consonanza</b>: stesse consonanti, vocali diverse. Gli accenti sono ignorati. Le sillabe sono contate con
+          regole approssimate e possono sbagliare con gli iati (pa-u-ra).
+        </p>
         <p>
           Dizionario <a href="https://docs.sslmit.unibo.it/doku.php?id=resources:morph-it">Morph-it!</a> di Marco Baroni
           ed Eros Zanchetta (CC BY-SA 2.0 / LGPL). <a href="https://github.com/fedeb95/orfeo">Codice sorgente</a> (MIT).
