@@ -1,5 +1,5 @@
 {
-  "name": "rime",
+  "name": "orfeo",
   "version": "0.2.0",
   "private": true,
   "type": "module",
@@ -10,10 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^9.5.0",
-    "@mui/material": "^9.5.0",
+    "@fontsource-variable/literata": "^5.3.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

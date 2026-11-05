@@ -1,71 +1,117 @@
-import { useMemo, useState } from "react";
-import { Alert, Box, Container, CssBaseline, LinearProgress, Link, Paper, Typography } from "@mui/material";
-import SearchForm from "./components/SearchForm";
+import { useDeferredValue, useMemo, useState } from "react";
 import Results from "./components/Results";
-import Pagination from "./components/Pagination";
 import { useDictionary } from "./dictionary";
-import { findRhymes } from "./rhymes";
+import { findRhymes, normalize } from "./rhymes";
+
+const TYPES = [
+  ["perfect", "Perfetta"],
+  ["assonance", "Assonanza"],
+  ["consonance", "Consonanza"],
+];
 
 export default function App() {
   const { dict, error } = useDictionary();
-  const [query, setQuery] = useState(null);
-  const [page, setPage] = useState(1);
+  const [suffix, setSuffix] = useState("ore");
+  const [type, setType] = useState("perfect");
+  const [syllables, setSyllables] = useState("");
 
-  const results = useMemo(() => (dict && query ? findRhymes(dict, query) : null), [dict, query]);
-  const totalPages = results ? Math.max(1, Math.ceil(results.length / query.limit)) : 0;
-  const pageItems = results ? results.slice((page - 1) * query.limit, page * query.limit) : [];
-
-  const handleSearch = (params) => {
-    setQuery(params);
-    setPage(1);
-  };
+  // La ricerca parte mentre si scrive; il valore differito tiene reattivo il campo.
+  const clean = normalize(useDeferredValue(suffix).trim());
+  const results = useMemo(
+    () =>
+      dict && clean ? findRhymes(dict, { suffix: clean, type, syllables: syllables ? Number(syllables) : null }) : null,
+    [dict, clean, type, syllables]
+  );
 
   return (
     <>
-      <CssBaseline />
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Paper elevation={3} sx={{ p: 3 }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 2 }}>
-            Trova rime
-          </Typography>
-          <Typography sx={{ mb: 2 }}>
-            Ricerca di rime per suffisso. Sono rime perfette tutte le parole con identico suffisso, ignorando gli
-            accenti. Per contare le sillabe viene applicata un'euristica, per cui il filtro "Sillabe" potrebbe dare
-            risultati inesatti.
-          </Typography>
+      <header>
+        <h1>
+          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="28" height="28" />
+          <span>
+            Orfeo <small>cerca rime italiane</small>
+          </span>
+        </h1>
 
-          <SearchForm onSearch={handleSearch} disabled={!dict} />
+        {/* Su telefono, Invio chiude la tastiera per mostrare i risultati. */}
+        <form role="search" onSubmit={(e) => (e.preventDefault(), document.activeElement.blur())}>
+          <label htmlFor="suffix">Parole che finiscono in</label>
+          <input
+            id="suffix"
+            type="search"
+            value={suffix}
+            onChange={(e) => setSuffix(e.target.value)}
+            placeholder="es. ore"
+            autoComplete="off"
+            autoCapitalize="off"
+            spellCheck="false"
+            enterKeyHint="search"
+          />
 
-          {!dict && !error && (
-            <Box sx={{ my: 3 }}>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Caricamento del dizionario…
-              </Typography>
-              <LinearProgress />
-            </Box>
-          )}
-          {error && (
-            <Alert severity="error" sx={{ my: 2 }}>
-              Impossibile caricare il dizionario ({error.message}). Ricarica la pagina per riprovare.
-            </Alert>
-          )}
+          <div className="filters">
+            <fieldset>
+              <legend>Tipo di rima</legend>
+              {TYPES.map(([value, label]) => (
+                <label key={value}>
+                  <input
+                    type="radio"
+                    name="type"
+                    value={value}
+                    checked={type === value}
+                    onChange={() => setType(value)}
+                  />
+                  {label}
+                </label>
+              ))}
+            </fieldset>
 
-          {results && (
-            <>
-              <Results items={pageItems} total={results.length} page={page} totalPages={totalPages} />
-              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-            </>
-          )}
-        </Paper>
+            <label>
+              Sillabe{" "}
+              <select value={syllables} onChange={(e) => setSyllables(e.target.value)}>
+                <option value="">tutte</option>
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </form>
+      </header>
 
-        <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 3 }}>
-          Dizionario:{" "}
-          <Link href="https://docs.sslmit.unibo.it/doku.php?id=resources:morph-it" target="_blank" rel="noopener">
-            Morph-it!
-          </Link>{" "}
-          di Marco Baroni e Eros Zanchetta, distribuito con licenza CC BY-SA 2.0 / LGPL.
-        </Typography>
-      </Container>
+      <main>
+        <p className="status" role="status">
+          {error
+            ? `Il dizionario non si è caricato (${error.message}). Ricarica la pagina per riprovare.`
+            : !dict
+              ? "Caricamento del dizionario…"
+              : !clean
+                ? "Scrivi la parte finale di una parola, per esempio “ore” o “ezza”."
+                : results.length === 0
+                  ? `Nessuna parola in -${clean}.`
+                  : `${results.length.toLocaleString("it-IT")} ${results.length === 1 ? "parola" : "parole"} in -${clean}`}
+        </p>
+
+        {results?.length > 0 && (
+          <Results key={`${clean}|${type}|${syllables}`} words={results} suffixLength={clean.length} />
+        )}
+      </main>
+
+      <footer>
+        <details>
+          <summary>Come funziona</summary>
+          <p>
+            <b>Perfetta</b>: stessa terminazione. <b>Assonanza</b>: stesse vocali, consonanti diverse.{" "}
+            <b>Consonanza</b>: stesse consonanti, vocali diverse. Gli accenti sono ignorati. Le sillabe sono contate con
+            regole approssimate e possono sbagliare con gli iati (pa-u-ra).
+          </p>
+        </details>
+        <p>
+          Dizionario <a href="https://docs.sslmit.unibo.it/doku.php?id=resources:morph-it">Morph-it!</a> di Marco Baroni
+          ed Eros Zanchetta (CC BY-SA 2.0 / LGPL). <a href="https://github.com/fedeb95/rime">Codice sorgente</a> (MIT).
+        </p>
+      </footer>
     </>
   );
 }

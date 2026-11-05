@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { buildDictionary, countSyllables, findRhymes, normalize } from "./rhymes";
+import { buildDictionary, countSyllables, findRhymes, groupBySyllables, normalize } from "./rhymes";
 
 describe("normalize", () => {
   test("rimuove accenti e maiuscole", () => {
@@ -70,5 +70,14 @@ describe("findRhymes", () => {
 
   test("suffisso vuoto → nessun risultato", () => {
     expect(findRhymes(dict, { suffix: "  " })).toEqual([]);
+  });
+});
+
+describe("groupBySyllables", () => {
+  test("gruppi in ordine crescente, ordine interno conservato", () => {
+    expect(groupBySyllables(["ore", "core", "amore", "cuore", "dolore"])).toEqual([
+      [2, ["ore", "core", "cuore"]],
+      [3, ["amore", "dolore"]],
+    ]);
   });
 });
