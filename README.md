@@ -1,6 +1,6 @@
-# Trova rime
+# Orfeo
 
-Ricerca di rime italiane per suffisso: rime perfette, assonanze e consonanze, con filtro opzionale per numero di sillabe.
+Cerca rime italiane per suffisso: rime perfette, assonanze e consonanze, raggruppate per numero di sillabe.
 
 È un sito interamente statico: il dizionario (~400.000 forme flesse, ~1 MB compresso) viene scaricato una volta e la ricerca avviene nel browser.
 
@@ -8,7 +8,7 @@ Ricerca di rime italiane per suffisso: rime perfette, assonanze e consonanze, co
 
 - `ingest.py` legge [Morph-it!](https://docs.sslmit.unibo.it/doku.php?id=resources:morph-it) (`morphit/`) e genera `my-rhyme-app/public/words.txt`, una parola per riga.
 - `my-rhyme-app/src/rhymes.js` contiene la logica di ricerca e il conteggio euristico delle sillabe.
-- `my-rhyme-app/` è il frontend React + MUI, costruito con Vite.
+- `my-rhyme-app/` è il frontend React, costruito con Vite.
 
 ## Sviluppo
 

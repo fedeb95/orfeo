@@ -106,3 +106,18 @@ export function findRhymes(dict, { suffix, type = "perfect", syllables = null })
   }
   return results.sort((a, b) => a.length - b.length || collator.compare(a, b));
 }
+
+/**
+ * Raggruppa le parole per numero di sillabe, mantenendo l'ordine interno.
+ * @param {string[]} words
+ * @returns {Array<[number, string[]]>} gruppi in ordine crescente di sillabe
+ */
+export function groupBySyllables(words) {
+  const groups = new Map();
+  for (const w of words) {
+    const n = countSyllables(w);
+    if (!groups.has(n)) groups.set(n, []);
+    groups.get(n).push(w);
+  }
+  return [...groups].sort(([a], [b]) => a - b);
+}
